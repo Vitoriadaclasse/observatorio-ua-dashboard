@@ -4,7 +4,24 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Configurações iniciais
-st.set_page_config(page_title="Observatório Científico UA", layout="wide", page_icon="🔬")
+st.set_page_config(page_title="Observatório Científico UA", layout="wide", page_icon="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1ZOSQg8JAJfqgtVPpSreJArI1a8cFPIFT1Q&s")
+# --- ESTILIZAÇÃO CSS (Centralização de Tabs) ---
+st.markdown("""
+    <style>
+    /* Centraliza o contentor das tabs */
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    /* Melhora o aspeto do texto das tabs */
+    div[data-testid="stTabs"] button [data-testid="stMarkdownContainer"] p {
+        font-size: 1.1em;
+        font-weight: 600;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # --- CARREGAMENTO DE DADOS ---
 @st.cache_data
