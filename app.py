@@ -117,24 +117,25 @@ else:
 
     # PAINEL 1: Monitorização de Desempenho (Bibliometria)
     with tab1:
-        st.subheader("Painel 1: Métricas de Produtividade e Impacto")
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Total Publicações", len(df_filtered))
-        m2.metric("Total Citações", int(df_filtered['Cited by'].sum()))
-        m3.metric("Média Citação/Artigo", round(df_filtered['Cited by'].mean(), 2))
-        m4.metric("Tópicos Ativos", df_filtered['Topic_ID'].nunique())
-
-        col_a, col_b = st.columns(2)
-        with col_a:
-            # Evolução Temporal
-            evolucao = df_filtered.groupby('Year').size().reset_index(name='Artigos')
-            fig_evol = px.bar(evolucao, x='Year', y='Artigos', title="Produção Anual de artigos", color_discrete_sequence=['#004b93'])
-            st.plotly_chart(fig_evol, use_container_width=True)
-        with col_b:
-            # Top Journals
-            top_journals = df_filtered['Source title'].value_counts().head(10).reset_index()
-            fig_jour = px.bar(top_journals, x='count', y='Source title', orientation='h', title="Top 10 Canais de Publicação")
-            st.plotly_chart(fig_jour, use_container_width=True)
+        with st.container(border=True):
+            st.subheader("Painel 1: Métricas de Produtividade e Impacto")
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Total Publicações", len(df_filtered))
+            m2.metric("Total Citações", int(df_filtered['Cited by'].sum()))
+            m3.metric("Média Citação/Artigo", round(df_filtered['Cited by'].mean(), 2))
+            m4.metric("Tópicos Ativos", df_filtered['Topic_ID'].nunique())
+    
+            col_a, col_b = st.columns(2)
+            with col_a:
+                # Evolução Temporal
+                evolucao = df_filtered.groupby('Year').size().reset_index(name='Artigos')
+                fig_evol = px.bar(evolucao, x='Year', y='Artigos', title="Produção Anual de artigos", color_discrete_sequence=['#004b93'])
+                st.plotly_chart(fig_evol, use_container_width=True)
+            with col_b:
+                # Top Journals
+                top_journals = df_filtered['Source title'].value_counts().head(10).reset_index()
+                fig_jour = px.bar(top_journals, x='count', y='Source title', orientation='h', title="Top 10 Canais de Publicação")
+                st.plotly_chart(fig_jour, use_container_width=True)
 
 # --- PAINEL 2: PANORAMA (NLP) ---
     with tab2:
@@ -455,4 +456,5 @@ else:
             data=df_display.to_csv(index=False).encode('utf-8'),
             file_name='explorador_ua_cientifica.csv',
             mime='text/csv'
+
         )
