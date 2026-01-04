@@ -215,11 +215,11 @@ if st.session_state.get("page", "cover") == "cover":
             "principal consiste em mapear a geração e a partilha de conhecimento entre os diferentes "
             "departamentos e áreas de investigação, recorrendo a uma análise bibliométrica baseada em "
             "dados provenientes da base Scopus."
-            "A plataforma permite:"
-            " Acompanhar a evolução das publicações científicas ao longo do tempo;"
-            " Avaliar o impacto do trabalho dos investigadores através das citações;"
-            " Identificar os principais meios utilizados para a divulgação dos resultados;"
-            " Destacar as áreas e temas de maior relevância no contexto atual."
+            " A plataforma permite:"
+            " acompanhar a evolução das publicações científicas ao longo do tempo;"
+            " avaliar o impacto do trabalho dos investigadores através das citações;"
+            " identificar os principais meios utilizados para a divulgação dos resultados;"
+            " destacar as áreas e temas de maior relevância no contexto atual."
         ),
         "tech_t": "Parte técnica",
         "tech_b": (
@@ -874,3 +874,4 @@ else:
             mime='text/csv'
 
         )
+
