@@ -82,20 +82,36 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- CARREGAMENTO DE DADOS ---
+# --- CARREGAMENTO DE DADOS (VERSÃO CORRIGIDA) ---
 @st.cache_data
 def load_data():
-    articles = pd.read_csv('Fact_Articles.csv')
-    topics = pd.read_csv('Dim_Topics.csv')
-    geo = pd.read_csv('Bridge_Geography.csv')
-    authors = pd.read_csv('Dim_Authors.csv')
-    bridge_authors = pd.read_csv('Bridge_Article_Authors.csv')
+    # Forçamos as colunas de ID a serem lidas como texto (str) para evitar erros de merge
+    articles = pd.read_csv('Fact_Articles.csv', dtype={'Article_ID': str, 'Topic_ID': str})
+    topics = pd.read_csv('Dim_Topics.csv', dtype={'Topic_ID': str})
+    geo = pd.read_csv('Bridge_Geography.csv', dtype={'Article_ID': str})
+    
+    # Estes são os ficheiros que você consertou com o script anterior
+    authors = pd.read_csv('Dim_Authors.csv', dtype={'Author_ID': str})
+    bridge_authors = pd.read_csv('Bridge_Article_Authors.csv', dtype={'Article_ID': str, 'Author_ID': str})
+    
     timeline = pd.read_csv('Agg_Timeline.csv')
-    df_terms = pd.read_csv("top_terms_per_topic.csv")
+    df_terms = pd.read_csv("top_terms_per_topic.csv", dtype={'Topic_ID': str})
 
-    # Merge para facilitar análises de tópicos
+    # Agora o merge vai funcionar porque ambos são 'str'
     df_full = articles.merge(topics, on='Topic_ID', how='left')
-    return df_full, topics, geo, authors, bridge_authors, timeline, df_terms, 
+    
+    return df_full, topics, geo, authors, bridge_authors, timeline, df_terms
+
+    # NOVOS FICHEIROS GERADOS
+    authors = pd.read_csv('Dim_Authors.csv', dtype={'Author_ID': str})
+    bridge_authors = pd.read_csv('Bridge_Article_Authors.csv', dtype={'Article_ID': str, 'Author_ID': str})
+    
+    timeline = pd.read_csv('Agg_Timeline.csv')
+    df_terms = pd.read_csv("top_terms_per_topic.csv", dtype={'Topic_ID': str})
+
+    df_full = articles.merge(topics, on='Topic_ID', how='left')
+    return df_full, topics, geo, authors, bridge_authors, timeline, df_terms
+
 # Inicialização dos dados
 try:
     df_full, df_topics, df_geo, df_authors, df_bridge_authors, df_timeline, df_terms, = load_data()
@@ -110,214 +126,51 @@ if 'page' not in st.session_state:
 def change_page(name):
     st.session_state.page = name
 
-     # CAPA
+# ==========================================
+# CAPA INTRODUTÓRIA
+# ==========================================
+if st.session_state.page == 'cover':
+    st.markdown("<h1 style='text-align: center; color: #004b93;'>Observatório da Comunidade Científica</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: #4F5B63;'>Universidade de Aveiro</h3>", unsafe_allow_html=True)
     
-if st.session_state.get("page", "cover") == "cover":
-
-    # Textos
-    # Textos formatados para o dicionário
-    t = {
-        "uni": "Universidade de Aveiro",
-        "title": "Observatório da Comunidade Científica",
-        "subtitle": "Plataforma de inteligência científica para monitorização de tendências e impacto",
-        "about_t": "Sobre o Projeto",
-        "about_b": (
-            "O presente projeto de Observatório tem como objetivo fornecer uma ferramenta de "
-            "apoio à análise da produção científica da Universidade de Aveiro. A sua finalidade "
-            "principal consiste em mapear a geração e a partilha de conhecimento entre os diferentes "
-            "departamentos e áreas de investigação, recorrendo a uma análise bibliométrica baseada em "
-            "dados provenientes da base Scopus."
-            "A plataforma permite:"
-            " Acompanhar a evolução das publicações científicas ao longo do tempo;"
-            " Avaliar o impacto do trabalho dos investigadores através das citações;"
-            " Identificar os principais meios utilizados para a divulgação dos resultados;"
-            " Destacar as áreas e temas de maior relevância no contexto atual."
-        ),
-        "tech_t": "Parte técnica",
-        "tech_b": (
-            "A plataforma foi construída para analisar de forma detalhada a produção científica da UA, "
-            "usando técnicas avançadas de NLP (Processamento de Linguagem Natural) e modelos de "
-            "extração de tópicos, como a NMF (Fatorização de Matrizes Não Negativas). Com isto, "
-            "conseguimos processar milhares de resumos e títulos para identificar agrupamentos temáticos "
-            "que mostram a identidade científica da universidade."
-            "Para tornar a análise ainda mais precisa, o sistema utiliza o modelo Llama via Ollama, "
-            "que interpreta e rotula automaticamente os tópicos. A interface foi desenvolvida em Python "
-            "com Streamlit, utilizando o Plotly para transformar dados bibliométricos complexos "
-            "em insights visuais fáceis de entender."
-        ),
-        "team": "Equipa de Desenvolvimento",
-        "btn": "Explorar Dashboard ➔"
-    }     
-
-    # CSS
-      
-    st.markdown("""                                
-    <style>
-
-    .header {
-        text-align: center;
-        margin-top: 40px;
-        margin-bottom: 60px;
-    }
-
-    .ua-logo {
-        max-width: 20px;
-        margin-bottom: 20px;
-    }
-
-    .ua-name {
-        font-size: 1.6rem;
-        font-weight: 900;
-        letter-spacing: 4px;
-        color: #4facfe;
-        margin-bottom: 35px;
-        text-transform: uppercase;
-    }
-
-    .main-title {
-        font-size: 3.2rem;
-        font-weight: 900;
-        margin-bottom: 12px;
-        color: white;
-    }
-
-    .subtitle {
-        font-size: 1.15rem;
-        opacity: 0.8;
-        margin-bottom: 60px;
-    }
-
-    .info-card {
-        background: rgba(255,255,255,0.04);
-        border-radius: 18px;
-        padding: 28px;
-        height: 100%;
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
-    }
-
-    .info-card h3 {
-        color: #4facfe;
-        margin-top: 0;
-    }
-
-    .team {
-        text-align: center;
-        margin-top: 50px;
-    }
-
-    .gh-container {
-        display: flex;
-        justify-content: center;
-        gap: 30px;
-        margin-top: 15px;
-    }
-
-    .gh-link {
-        color: #4facfe;
-        font-weight: 600;
-        text-decoration: none;
-    }
-
-    .gh-link:hover {
-        color: white;
-        text-shadow: 0 0 8px rgba(79,172,254,0.9);
-    }
-
-   div.stButton > button {
-        background-color: #004b93; /* Cor azul solicitada */
-        color: white;               /* Cor do texto para contraste */
-        font-weight: 800;
-        border-radius: 30px;
-        height: 56px;
-        font-size: 1rem;
-        border: none;
-        box-shadow: 0 8px 20px rgba(0, 75, 147, 0.3); /* Sombra suave em azul */
-        transition: all 0.3s ease;
-    }
-
-    div.stButton > button:hover {
-        background-color: #005bb3; /* Um azul um pouco mais claro ao passar o rato */
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 12px 25px rgba(0, 75, 147, 0.5);
-    }
-    
-    div.stButton > button:active {
-        transform: translateY(0px);
-    }
-
-    </style>
-                """, unsafe_allow_html=True)
-           
-    # HEADER
-    
-    st.markdown("""
-    <div class="header">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1ZOSQg8JAJfqgtVPpSreJArI1a8cFPIFT1Q&s" class="ua-logo">
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div class="header">
-        <div class="ua-name">{t['uni']}</div>
-        <div class="main-title">{t['title']}</div>
-        <div class="subtitle">{t['subtitle']}</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-   
-    # CARDS
-    
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown(f"""
-        <div class="info-card">
-            <h3> {t['about_t']}</h3>
-            <p>{t['about_b']}</p>
-        </div>
-        """, unsafe_allow_html=True)
-
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown(f"""
-        <div class="info-card">
-            <h3> {t['tech_t']}</h3>
-            <p>{t['tech_b']}</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.image("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMwAAADACAMAAAB/Pny7AAAArlBMVEWS1AH+//r///yO0AD///+43XX8/u6233PM45KU1BD8//yP1gCV1AD6/PHD5or9//aJ0QC/4nfp97+MzQ+Syw/W66j//P+Y0gD//+vs+7uz2GGRzgDw+9DC4X2y22H6/+mWzCXl9cy+5nSo21Oh1UXn98Ww2VKk0izW75CayjK+23Cd1SWlzEj0/83J4YnT36P3/t3W7J/s89Ch1jvT7rXO7YKx3UzZ85ydyBD+/9BFgKj+AAAHr0lEQVR4nO2cD3eaShOH2T/dJiy4CLiaoKJpsElpvahtc9/v/8XeWYi5CKjJrYHonadJj8fswfntzOwusrOWhSAIgiAIgiAIgiAIgiAIgiAIgiAIgpw/jmNJK+raihPhOIxZTtdWnApp6NqIEwF+saygaytOhZPOLkZLNPXng7svG4d1bckJYAPCORf+5D5iljxzRUaMooKT+ST1JPPOeixgAwViNCdKDO4d6xLEKEXgX7JwznuULsRQQolSdP31w2aNMxwOnWJWNLnQPM1vxRBCgfFMGjl198j813Hyi7D2FcNnDy2Wi3FyQxpbFWKIwQb3PARGdU0MRN+QScgoj1ks6GbJwIxTwsfbb6Gzb/1VEqNcrce3XpMYy7wJgqaLNGTmuu9rd9PHA9H3hx+Ek3gZ7mlVFqM0t8egu8FWIzD4S3BOs6vHDlYM5vO/P8UwJ9pck29Bc2+WxVCuiFhEVlNKSBnewfhNNOfxw6b1e4Zriy1+EKPFheyOp55Jo5qdJTGUU6HIKpJe7VoQrt40M2mlhOL8x7RxlHhHPPY746QwEzrdvzcZVOvSkpii6XpmNeS3w+7n0GrbMF5EkI3t3AblAyn7Peb2qPhwoTTx06amVTE8XjSkDGOzhJRaqfG01bUC29wQEza5hUoQ7q5mDclQ84zoN4lJVzDW5c1oPinxJG1zfGZXggpXP2eDEoKLXnAwZ4qm7lXDbXQwiYkorgUDmvnf7bU3PkuWzjndRoawOaGaxrd111TFEHfFrGGlESQ/5c/5B2Ko8fX8vqV1wBCysyfKJuadrse/YeIb/jMOwQv20yValVqpwa6RMMJ7kH20nDLw2lW9lsTA4nc4qGqxbVcMZvmfnWczgXSudsRQOoh240fKTaIq16K2ooPrduIM7ks2Ca+KUS4MAoFZlWxzAvp2s4Z5o2Qr18lmV4sXDLiuXItwypNNO65xzBRXFWNWK4pOgpIYSK0JTII7Vurs846R0GSkmsRk07YWz97nuBpmeQzx+LY8QcjZT6642G3kp+UlgHcrlG1XrwRviM+tifk0qnemgOzQPzZGDdyZmLvKqBdzsjuawbTZL60k2fcxBFk1Z4yf3U8thZnFPtUGs23HJ/dMFt8xy3CZ1VpRxbPJS25Hm7ULs1RNDLVb88wBMSPbTu5SD26zvGgxiBu63IV18dMiZMxjQdqfu4pXs+/DiIFJj2T+w92XRX+1dmEBWvmzbSto4saDX9PF3VMSQ6brjyqGaiVgLaBEHLvUFZzWXANqjDNMiwxuPTlpvk57A8Ahz4wUrKXBWqpcWJfUxikluG3u0zQsK3W+2q5H4kfxzHOv/jEfxDOn4bLEfJQwO4kY9AyKwTB7m5iL8sxFicEw+6hi0DMoBsPsbWIuyjMXJQbDDMVgmL1NDHrmo4q5KM9clBgMMxSDYfY2MeiZU4mhzew19kjjLsVwpdwa5i1FqfnZsRKsbmgNEP5yzQ7DTHO/dzfpV+j1+5NVko20dvNWYGz+yNNd+w/Vtjljrt3nLRAdekZnj4HHvBrS84Z3iSCFgZxTIQgdL++j/E81vmdauJ17hvtRw45Gs/PSkuzrMn4WA+Fmk2QaWbJpZyNc4eZlc1OXYm6YlNdmV4YzzH+KlwZTPtcvtmhwszc22USWZzmlVv+8ZDdaP6dNh2HGbwJv7y5tKcMnXoih/NDeSxkYz9ide8YPPbl/rytLIbWVS7Smvw4ZGPgwKnYfZofFWOxbZnYLUzJID22IK4vpMMyOiLGszdNYxDe/woNbr8/DMzCmBUEYhuzw9t4z8YwsSk/lviqbgjPxDIzQZhMaY051F3CZMxHzOs4kzF7HxXrmosRgmP0rUMxxMMz+GPTMcS7WMxclBsPsX4FijoNh9sdUxFDzVdOfl+5JzzflKB17hnI/OEW9azDntnK7D7NAykM3xK8DxPCtmA4fNvmhPEHORD41hU9deyaehg2l5OYbjEaDWMP7HvNuBVfcbluMVRVDx4NeE5NPX+oPB1g6bWzcG2uutpVQ7YUZGFQpOqWc8irwjorHV7+jF6OkqXoO735mpNaYF9XmW8BD7YVZQzlwDfPtsjKHLkTF2FB8Z/Z1FduNZWa78NbKgUHMfa1Quy6m6H8aT4qEcszDmllCtiPWIWzO/bYKtS1TQl8rSK5Dial0jBe5WaZAePZkygX1Kx6701VrJfSSLRU9XvenFHSxcOO8Mtth0gxYmrxiC4Fw1bK9I0HYdUK0Hh0NmOLMqVUoPU9K7+//8QObA166wCV65G+OG3EyvJ6io6ay5CZF6ulxlqaP37L6MQZNzc2BIAefsZ2c9Mauly7vQY+ybJ5klKta5X0dM2gQf9ZwcND74W3mrwiz577OZx0K8XM8xojx3vxruydpSbZY1+uw94jRJqXN7pOjapTi1F2bMwXaPORVgpr5yMSEIvYxYMllTtuCm68DjfKegdB1/VvPaluMZLPlWkDe2Hv2NL0V6Bmzzls2nZP03sDiOVxMbmKzrDqRFirGV4thF1qYeeIazRa3y6uTMJn0p4vNNbMaj3N7Z+AjPfMAeXh9GuAux+voPGSZf3BxYA6znFORP1/fd8IggiAIgiAIgiAIgiAIgiAIgiAIgiAIgiD/Jf4PGqarMcx80bMAAAAASUVORK5CYII=", use_container_width=True)
+        
+        st.markdown("### Sobre o Projeto")
+        st.write("""
+        Este observatório é o resultado de uma análise bibliométrica e de conteúdo exaustiva realizada ao longo do semestre. 
+        O processo envolveu a extração de dados da base Scopus, seguida por uma etapa rigorosa de limpeza e normalização em Python. 
+        
+        **Destaque Técnico:** Implementamos técnicas de **Processamento de Linguagem Natural (NLP)** para a extração de tópicos latentes, 
+        transformando resumos (abstracts) em clusters temáticos compreensíveis. Através de modelos estatísticos e análise de redes, 
+        pretendemos mostrar a dinâmica da produção acadêmica, o impacto das publicações e a amplitude geográfica da rede de colaboração 
+        da nossa comunidade científica.
+        """)
+        
+        st.info("""**Autores:**
+                
 
-  
-    # TEAM / GITHUB
-    
-    st.markdown(f"""
-    <div class="team">
-        <h4>{t['team']}</h4>
-        <div class="gh-container">
-            <a class="gh-link" href="https://github.com/AnnaPaulaBarros" target="_blank"> Anna Paula Barros da Silva - 129253 </a>
-            <a class="gh-link" href="https://github.com/rebeca-gomes-de-freitas" target="_blank"> Rebeca Gomes de Freitas - 130542 </a>
-            <a class="gh-link" href="https://github.com/Vitoriadaclasse" target="_blank"> Vitória da Conceição Rodrigues - 130557 </a>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+Anna Silva (129253)
+                
 
-    
-    # BOTÃO
-   
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    _, col_btn, _ = st.columns([1, 1, 1])
-    with col_btn:
-        if st.button(t["btn"], use_container_width=True):
-            st.session_state.page = "dashboard"
+Rebeca Freitas (130542)
+                
+                
+Vitoria Rodrigues (130557)""")
+        if st.button("Aceder ao Dashboard"):
+            change_page('dashboard')
             st.rerun()
 
+# ==========================================
 # DASHBOARD PRINCIPAL
-
+# ==========================================
 else:
     # --- SIDEBAR INTERATIVO ---
     st.sidebar.image("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMwAAADACAMAAAB/Pny7AAAAkFBMVEX///9RtQBIsgCEyG3Y7cx1w1JbuSWz3Z77+/v4+Pjy8vLq6urv7+/l8uCbmpvOzs6joqM7rgDk5ORXuBLGxsbZ2dmUk5Sp2JDz+u+urq67u7vF5bK2tbapqKn5/fbBwMGIh4i84qnK57yY0HuOzG5pvULh8tdhujR8x0+NyXK+37JJrxh+xGSKzGd7xV1wwT+JIouDAAAGkElEQVR4nO2ai3LbKBRAsdYPEApgDCQoYDlxbbfdtvv/f7cX5IfseNq4cWJl5p6ZdKQrrHIEXAE2IQiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIAiCIMiNmC+/3A/nt67FlZiPi9nqx/rW1bgO8/FgUBSr4a3rcRWSDOhsPmXb3A0fjs5bmcH062nBde/1hsvRanTUpbYyg+nTUcH5crX68Xjs3TOeR6lLje46ob3MpltwPpkWRTFe9tjmcZPrXXzr1HEnMyg63Yp+/7dIoVl/bdY/im297w8vlr3M9PlQcjhuSxbjpzP36QWT2VZmMHva2xxkHvcF15tdweLn3dlb3ZyH5a6K8MT3SeBu380mu9D856Hg6vn8zW7N+te+jp0kcL9vhP/IaQjY9LSfDUedShY/26G93hxC26Z5nB6KDcaT39zxhhzJgM3zw/zuadUJzZbr+Xx9Py4+nQyMm9VoMx4chTaj0WZ2FPokMq8DZT4AlEGZDwBlfiNjvaW//x+pDbo9YrLmJxfLxpT9kTFO/kGGGWG3Na+VPrnIY+iRDP2DShfWxFOZ6nYyTFsGFbCcaE1t3UCn4ZZxm+rDLFSUm5AaikvKjSW2qWWVisD1Sta2krEt02Qn3TS69ElGy1qyj5bhMdXGCsMaFZUSzhLprHQ11MQsLGmcUk6VEDTOmXwmLDVCEw1xFeHj1DgBHzSM5AMlQEYKAZdPh9N7y1TB8yxDmwUISBEYyJDo4OlGRbTz8JRdhBLOVFY06cxXIFMGZQmVLmoLAVLCfbSCe7HgQmmTEBfx8ra5lozTucNnGQN/WklSR+hU0ESldTU0o1OpU6YEoHkKQAKAhqXtfbRUNrd1YEGlbirF6Xj6OBnRkdGiTnVhXihALKx1qaJ2sXCxoTTLmKwFMpXxwjnPTZZhPlRh+7E/pcX3kVEnMunZBkWpj9ImqHRtMraNcrGUXRmthNG83rVMSgBB5Y/py9Pa22R8lnHHMpTAm0Q0lNQi1aeSJLdMZXjKxkLLXTdLvcukV01Zey7z28eqwGqXeie3HzxmWOMks/6FDFcuVUhDJmPaOZJbRi8UZ9qrJAMfNCUPDhpEmKo0wvPKCwuXIQFoFTXTQvy9THHMoeLn4vuXpo7OxSAalmV49CCTunoUvh3EzuXUvEhPXTo4heefZgBVhJMYoubeCRGji9zCE3BeQSaDI+FUdbHLTqbYTB4PPC131S6KX0+d+HbD8DADYNZWlJek4vAcKYcsq9MDLbcdnlmp82l+yiWMBIiXHHSphisMPgVFLIU3bD7ipKpoKm8vT2Udmfvj78nW/7Xh2fFXNOvZiUy/2Muc7B8/5P3L4uQbjGG7/fnZZKARYIh8Py39SWXIenL/Yhf208qcLX1WhpWvz6LVG2b4f+QaMta/esLOXXPxJOX1XEVGmdfKVLW8tIYX8FYZythWBo5oN5xnyLQ9SYc5kCMUIjRHrtxKb5ThtVBSRpDRtVK7nQpiA6yvJK18nk/WHtYuXkTojJWXaUNDwqRBwnKu+YsV2LvJcC9qE5SQjHtljNpuUGiopgwwsfFpiiZdA39B1rAygBkmzKG98hL+NY3wV7V5kwyseWWeCUuWN1p4rHOykqmJqPLgANe9qErwIWlSVokkEzlMQlMmgGnmNXvam2SqkLdXrJI8eMu59qJ90rTk2ohAmFOEwLoZpDiHWX6TZYQkrJ3xV7AW649M7iY6StBIqLxQJqWB8RBAhkTH9EKmnY18teFZBtZvTe6R2xv0QqY8tIyvq5Si2k4Dw6UkpQpp4WbNoswLmpy7djK0bZm37fldV4bm/csSxkzZ+LRiNPntWUZYzVArPBwKGOykHSFU13onkyIMyrz+DfUOMoPTbKYaW8MynuoIC35YLKamgXVnbWV0qSfVLu3b0MZBBFZsOZslmTKVMep9stloeNflsLp56ETX96eLMx5gcMgADWK9UnG7aV6FdBwULPQtrD5TCCIKBjuPhlqfty4gkasXG+dXkRkU0y7jp21DzZ+/Hl04WTaTNMt8ebQ9PkpU9MUUk14wP30dd1/ObWgU02XbNpPizOXe/kKDTGYva5tsJsnmeXpWta+/nTn6vUm3wsX39Xo4Pnutr2szkn5vdt5mOpudbZdBj39vRuZPm+Is0+nZ8PhbXztZYv787Z8LmPTZBUEQBEEQBEEQBEEQBEEQBEEQBEEQBEEQBEEQBEEQBEEQBEEQBEEQBDnL/7ENiOGg1fy5AAAAAElFTkSuQmCC", width=200)
     st.sidebar.title("Painel de Controle")
     
-    if st.sidebar.button("Voltar para Capa"):
+    if st.sidebar.button("🔙 Voltar para Capa"):
         change_page('cover')
         st.rerun()
     
@@ -345,79 +198,33 @@ else:
     ])
 
 # PAINEL 1: Monitorização de Desempenho (Bibliometria)
-
-st.markdown("""
-<style>
-    /* Estilização dos indicadores superiores */
-    [data-testid="stMetric"] {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 20px;
-        border-radius: 15px;
-        text-align: center;
-    }
-    [data-testid="stMetricValue"] {
-        color: #ffffff !important;
-        font-size: 32px !important;
-    }
-    [data-testid="stMetricLabel"] {
-        color: #4facfe !important;
-        font-size: 16px !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Bloco de Métricas
-
-with tab1:  # garante que tudo está dentro da aba correta
-    st.markdown("<br>", unsafe_allow_html=True)  # espaçamento opcional
-    with st.container():
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Total Publicações", f"{len(df_filtered)}")
-        m2.metric("Total Citações", f"{int(df_filtered['Cited by'].sum())}")
-        m3.metric("Média Citação/Artigo", f"{df_filtered['Cited by'].mean():.2f}")
-        m4.metric("Tópicos Ativos", f"{df_filtered['Topic_ID'].nunique()}")
-
-    st.markdown("<br>", unsafe_allow_html=True)  # separação entre métricas e gráficos
-
-    # Bloco de gráficos
-    col_a, col_b = st.columns(2)
-    with col_a:
-        # Evolução Temporal
-        evolucao = df_filtered.groupby('Year').size().reset_index(name='Artigos')
-        fig_evol = px.bar(
-            evolucao,
-            x='Year',
-            y='Artigos',
-            title="Produção Anual de artigos",
-            color_discrete_sequence=['#004b93']
-        )
-        fig_evol.update_layout(
-            xaxis_title=None, 
-            yaxis_title="Volume de Artigos",
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
-        )
-        st.plotly_chart(fig_evol, use_container_width=True)
-
-    with col_b:
-        # Top Journals
-        top_journals = df_filtered['Source title'].value_counts().head(10).reset_index()
-        fig_jour = px.bar(
-            top_journals,
-            x='count',
-            y='Source title',
-            orientation='h',
-            title="Principais Canais de Publicação",
-            color_discrete_sequence=['#004b93']
-        )
-        fig_jour.update_layout(
-            xaxis_title=None,
-            yaxis_title=None,
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)'
-        )
-        st.plotly_chart(fig_jour, use_container_width=True)
+    with tab1:
+        with st.container(border=True):
+            st.markdown(f"<h2 style='text-align: center; color: #007A53;'>Painel 1: Métricas de Produtividade e Impacto</h2>", unsafe_allow_html=True)
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Total Publicações", len(df_filtered))
+            m2.metric("Total Citações", int(df_filtered['Cited by'].sum()))
+            m3.metric("Média Citação/Artigo", round(df_filtered['Cited by'].mean(), 2))
+            m4.metric("Tópicos Ativos", df_filtered['Topic_ID'].nunique())
+    
+            col_a, col_b = st.columns(2)
+            with col_a:
+                # Evolução Temporal
+                evolucao = df_filtered.groupby('Year').size().reset_index(name='Artigos')
+                fig_evol = px.bar(evolucao, x='Year', y='Artigos', title="Produção Anual de artigos", color_discrete_sequence=['#004b93'])
+                fig_evol.update_layout(
+                xaxis_title=None, 
+                yaxis_title="Volume de Artigos")
+                st.plotly_chart(fig_evol, use_container_width=True)
+                
+            with col_b:             
+                # # Top Journals
+                top_journals = df_filtered['Source title'].value_counts().head(10).reset_index()
+                fig_jour = px.bar(top_journals, x='count', y='Source title', orientation='h', title="Principais Canais de Publicação")
+                fig_jour.update_layout(
+                xaxis_title=None, 
+                yaxis_title=None)
+                st.plotly_chart(fig_jour, use_container_width=True)
 
 # --- PAINEL 2: PANORAMA (NLP) ---
     with tab2:
@@ -577,124 +384,88 @@ with tab1:  # garante que tudo está dentro da aba correta
             # Colunas para organizar a lista de status
             c_hot, c_stable = st.columns(2)
             
+            # Colunas para organizar a lista de status
+            c_hot, c_stable = st.columns(2)
+            
             with c_hot:
                 st.markdown("<p style='color: #004b93; font-weight: bold;'> ÁREAS EM ALTA (HOT)</p>", unsafe_allow_html=True)
-                # Filtragem dos tópicos Hot na dimensão
-                hot_list = df_topics[df_topics['Trend_Status'].str.contains('Hot', na=False)]['Topic_Label'].tolist()
+                # Filtra, transforma em lista e coloca em ordem alfabética
+                hot_list = sorted(df_topics[df_topics['Trend_Status'].str.contains('Hot', na=False)]['Topic_Label'].tolist())
                 for t in hot_list:
-                    st.markdown(f"- {t}")
+                    st.write(t)
             
             with c_stable:
                 st.markdown("<p style='color: #4F5B63; font-weight: bold;'> ÁREAS CONSOLIDADAS (STABLE)</p>", unsafe_allow_html=True)
-                # Filtragem dos tópicos Estáveis
-                stable_list = df_topics[df_topics['Trend_Status'].str.contains('Stable', na=False)]['Topic_Label'].tolist()
+                # Filtra, transforma em lista e coloca em ordem alfabética
+                stable_list = sorted(df_topics[df_topics['Trend_Status'].str.contains('Stable', na=False)]['Topic_Label'].tolist())
                 for t in stable_list:
-                    st.markdown(f"- {t}")
+                    st.write(t)
 
             st.caption("Nota: A segmentação por cores no gráfico acima permite validar visualmente o status de tendência de cada área.")
 
-# --- PAINEL 4: REDES E COLABORAÇÃO ---
+
+# --- PAINEL 4: REDES E COLABORAÇÃO (SINCRONIZADO COM SCOPUS) ---
     with tab4:
         with st.container(border=True):
             st.markdown(f"<h2 style='text-align: center; color: #007A53;'>Painel 4: Dimensão Geográfica e Colaboração Internacional</h2>", unsafe_allow_html=True)
-        
-            st.write("""
-        Esta visualização mapeia a presença global da UA. As bolhas indicam os países mencionados ou 
-        afiliados nos artigos analisados, revelando a amplitude das redes de colaboração e os focos geográficos de estudo.
-        """)
+            st.write("Mapeamento da presença global e redes de colaboração da UA.")
 
-            # 10. Mapa de Colaboração Global (Mapa Mundi)
             if df_filtered.empty:
-                st.warning(" Ajuste os filtros laterais para visualizar o mapa de colaboração.")
+                st.warning("⚠️ Ajuste os filtros para carregar os dados.")
             else:
-                # Filtragem da ponte de geografia com base nos artigos atualmente filtrados
+                # 1. PROCESSAMENTO DE PAÍSES (A sua lógica favorita)
                 article_ids = df_filtered['Article_ID'].unique()
                 geo_filtered = df_geo[df_geo['Article_ID'].isin(article_ids)].copy()
 
+                paises_validos = ['Brazil', 'Portugal', 'Spain', 'Germany', 'United States', 
+                                  'France', 'Italy', 'United Kingdom', 'China', 'Argentina', 
+                                  'Chile', 'Colombia', 'Mexico', 'Angola', 'Mozambique']
+                
+                map_fix = {'Brasil': 'Brazil', 'Espanha': 'Spain', 'Alemanha': 'Germany', 'Estados Unidos': 'United States'}
+                geo_filtered['Country_Region'] = geo_filtered['Country_Region'].replace(map_fix)
+                geo_filtered = geo_filtered[geo_filtered['Country_Region'].isin(paises_validos)]
+
                 if geo_filtered.empty:
-                    st.info("ℹ️ Não foram encontradas localizações para os filtros selecionados.")
+                    st.info("ℹ️ Sem dados geográficos válidos para estes filtros.")
                 else:
-                    # Agregação por País/Região
                     geo_counts = geo_filtered['Country_Region'].value_counts().reset_index()
                     geo_counts.columns = ['Local', 'Frequência']
                     
-                    # Criar o Mapa de Bolhas (Scatter Geo)
-                    # Plotly reconhece automaticamente nomes de países em inglês/português padrão
-                    fig_map = px.scatter_geo(
-                        geo_counts,
-                        locations="Local",
-                        locationmode="country names",
-                        size="Frequência",
-                        hover_name="Local",
-                        color="Frequência",
-                        color_continuous_scale="Blues",
-                        title="Intensidade de Colaboração e Estudo por Região",
-                        projection="natural earth", # Projeção moderna e equilibrada
-                        labels={'Frequência': 'Menções/Artigos'}
-                    )
-
-                    # Aplicação de Design Minimalista
-                    fig_map.update_geos(
-                        showcountries=True, 
-                        countrycolor="#d1d1d1",
-                        showcoastlines=True, 
-                        coastlinecolor="#d1d1d1",
-                        showland=True, 
-                        landcolor="#f9f9f9",
-                        showocean=True, 
-                        oceancolor="#ffffff" # Fundo limpo para pouca tinta
-                    )
-
-                    fig_map.update_layout(
-                        margin=dict(l=0, r=0, t=50, b=0),
-                        height=600,
-                        coloraxis_colorbar=dict(title="Volume", thickness=15)
-                    )
-
+                    fig_map = px.scatter_geo(geo_counts, locations="Local", locationmode="country names",
+                                            size="Frequência", hover_name="Local", color="Frequência",
+                                            color_continuous_scale="Blues", projection="natural earth")
+                    fig_map.update_layout(margin=dict(l=0, r=0, t=30, b=0), height=450)
                     st.plotly_chart(fig_map, use_container_width=True)
-                    
-                    st.info("💡 **Insight:** O tamanho das bolhas reflete a centralidade da região na produção científica da UA.")
 
             st.divider()
 
-            # 11. Detalhes de Colaboração (Top 10 Países)
-            st.markdown("#### Top 10 Países Parceiros")
+            # 2. RANKING E AUTORES
+            col_g1, col_g2 = st.columns([2, 1])
             
-            if not df_filtered.empty and not geo_filtered.empty:
-                col_g1, col_g2 = st.columns([2, 1])
-                
-                with col_g1:
-                    # Ranking de Países
-                    top_geo = geo_counts.head(10)
-                    fig_geo_bar = px.bar(
-                        top_geo, 
-                        x='Frequência', 
-                        y='Local', 
-                        orientation='h',
-                        color='Frequência',
-                        color_continuous_scale='Blues',
-                        labels={'Local': '', 'Frequência': 'Nº de Artigos'}
-                    )
-                    fig_geo_bar.update_layout(
-                        yaxis={'categoryorder':'total ascending'},
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        showlegend=False,
-                        coloraxis_showscale=False
-                    )
-                    st.plotly_chart(fig_geo_bar, use_container_width=True)
+            with col_g1:
+                st.markdown("**🌍 Ranking de Países**")
+                if not geo_filtered.empty:
+                    top_paises = geo_counts.head(10).sort_values('Frequência', ascending=True)
+                    fig_bar = px.bar(top_paises, x='Frequência', y='Local', orientation='h', 
+                                    color='Frequência', color_continuous_scale='Blues')
+                    st.plotly_chart(fig_bar, use_container_width=True)
 
-                with col_g2:
-                    # Lista de Autores Hub (Identificados no roteiro)
-                    st.markdown("**Centralidade de Autoria**")
-                    # Pegamos a ponte de autores para os artigos filtrados
-                    bridge_filt = df_bridge_authors[df_bridge_authors['Article_ID'].isin(article_ids)]
-                    top_auth_ids = bridge_filt['Author_ID'].value_counts().head(5).reset_index()
-                    top_auth_names = top_auth_ids.merge(df_authors, on='Author_ID')
-                    
-                    for _, row in top_auth_names.iterrows():
-                        st.write(f"👤 **{row['Author_Name']}** ({row['count']} art.)")
-                    
-                    st.caption("Autores com maior rede de conexão interna na amostra.")
+            with col_g2:
+                st.markdown("**👥 Principais Autores**")
+                # Filtramos a ponte com os novos IDs oficiais
+                bridge_ids = df_bridge_authors[df_bridge_authors['Article_ID'].isin(article_ids)]
+                top_ids = bridge_ids['Author_ID'].value_counts().head(12).reset_index()
+                top_ids.columns = ['Author_ID', 'count']
+                
+                # Unimos com os novos nomes completos vindos do Dim_Authors
+                top_names = top_ids.merge(df_authors, on='Author_ID', how='left')
+                top_names = top_names.sort_values('Author_Name')
+
+                for _, row in top_names.iterrows():
+                    # Como o nome no novo CSV já está completo (ex: "Silva, Anna P."), basta exibir!
+                    st.write(f"👤 {row['Author_Name']}")
+                
+                st.caption("Dados extraídos diretamente da base ScopusUA.")
 
 # --- PAINEL 5: Explorador de Dados ---
     with tab5:
