@@ -658,7 +658,7 @@ else:
 # --- PAINEL 3: TENDÊNCIAS E CICLO DE VIDA ---
     with tab3:
         with st.container(border=True):
-            st.markdown(f"<h2 style='text-align: center; color: #007A53;'>Painel 3: Ciclo de Vida e Maturidade dos Tópicos</h2>", unsafe_allow_html=True)
+            st.markdown(f"<h2 style='text-align: center; color: #004b93;'>Painel 3: Ciclo de Vida e Maturidade dos Tópicos</h2>", unsafe_allow_html=True)
             
             if df_filtered.empty:
                 st.warning("Ajuste os filtros laterais para visualizar a evolução temporal.")
@@ -874,4 +874,5 @@ else:
             mime='text/csv'
 
         )
+
 
